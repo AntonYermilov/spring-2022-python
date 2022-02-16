@@ -10,7 +10,7 @@ class NodeInfo:
     color: str
 
 
-def get_node_info(node: ast.AST) -> NodeInfo:
+def _get_node_info(node: ast.AST) -> NodeInfo:
     if isinstance(node, ast.Attribute):
         return NodeInfo(f'.{node.attr}', '#c49b5c')
     if isinstance(node, ast.Constant):
@@ -56,31 +56,27 @@ def get_node_info(node: ast.AST) -> NodeInfo:
     return NodeInfo(str(type(node)), '')
 
 
-def build_graph(node: ast.AST, graph: nx.DiGraph):
+def _build_graph(node: ast.AST, graph: nx.DiGraph):
     node_id = graph.number_of_nodes()
-    node_info = get_node_info(node)
+    node_info = _get_node_info(node)
     graph.add_node(node_id, label=node_info.label, color=node_info.color, style='filled')
     for k, v in ast.iter_fields(node):
         if not isinstance(v, list):
             v = [v]
         for child in v:
             if isinstance(child, ast.AST) and not isinstance(child, ast.Load) and not isinstance(child, ast.Store):
-                graph.add_edge(node_id, build_graph(child, graph))
+                graph.add_edge(node_id, _build_graph(child, graph))
     return node_id
 
 
-def draw_graph(graph: nx.DiGraph, file: Path):
+def _draw_graph(graph: nx.DiGraph, file: Path):
     if not file.parent.exists():
         file.parent.mkdir(parents=True)
     nx.drawing.nx_pydot.to_pydot(graph).write_png(str(file))
 
 
-def main():
-    source_node = ast.parse(Path('fib.py').read_text())
+def draw_ast(source_path: Path, image_path: Path):
+    source_node = ast.parse(source_path.read_text())
     graph = nx.DiGraph()
-    build_graph(source_node, graph)
-    draw_graph(graph, Path('artifacts', 'ast.png'))
-
-
-if __name__ == '__main__':
-    main()
+    _build_graph(source_node, graph)
+    _draw_graph(graph, image_path)

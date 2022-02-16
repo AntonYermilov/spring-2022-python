@@ -1,4 +1,0 @@
-astunparse==1.6.3
-networkx==2.6.3
-pydot==1.4.2
-graphviz==0.19.1
